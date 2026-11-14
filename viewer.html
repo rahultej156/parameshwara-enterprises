@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Model check</title>
+    <style>
+      body { margin: 0; background: #dfe6ee; font-family: sans-serif; }
+      canvas { display: block; width: 100vw; height: 100vh; }
+      #info { position: fixed; left: 8px; top: 6px; font-size: 13px; color: #123; }
+    </style>
+  </head>
+  <body>
+    <!-- A small page for looking at a 3D model from four sides.
+         Open /viewer.html, or /viewer.html?m=other.glb for another file
+         in public/models. Add &zoom=head or &zoom=hands for a close view. -->
+    <canvas id="c"></canvas>
+    <div id="info">loading…</div>
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+      import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+      import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+      import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+
+      const q = new URLSearchParams(location.search);
+      const file = q.get('m') || 'uncle.glb';
+      const zoom = q.get('zoom');
+      const canvas = document.getElementById('c');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#dfe6ee');
+      scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.add(new THREE.DirectionalLight('#ffffff', 1.5).translateZ(3).translateY(2));
+
+      function onModel(model) {
+        let tris = 0;
+        model.traverse((o) => {
+          if (!o.isMesh) return;
+          if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+          // Files from the image-to-3D tool leave out the "metal" value, and
+          // the file format then treats the surface as full metal, which
+          // looks black. Cloth and skin are not metal.
+          o.material.metalness = 0;
+          o.material.roughness = 0.85;
+          tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+        });
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const centre = box.getCenter(new THREE.Vector3());
+        scene.add(model);
+        document.getElementById('info').textContent =
+          `${file} · ${Math.round(tris)} triangles · size ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`;
+        window.__loaded = true;
+
+        const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 50);
+        const focus = centre.clone();
+        let dist = size.y * 2.1;
+        if (zoom === 'head') { focus.y = box.max.y - size.y * 0.13; dist = size.y * 0.62; }
+        if (zoom === 'hands') { focus.y = box.min.y + size.y * 0.47; dist = size.y * 1.0; }
+        if (zoom === 'feet') { focus.y = box.min.y + size.y * 0.12; dist = size.y * 0.62; }
+        const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2]; // front, his left, back, his right
+
+        function draw() {
+          const w = innerWidth, h = innerHeight;
+          renderer.setSize(w, h, false);
+          renderer.setScissorTest(true);
+          angles.forEach((a, i) => {
+            const vw = w / 4;
+            renderer.setViewport(i * vw, 0, vw, h);
+            renderer.setScissor(i * vw, 0, vw, h);
+            cam.aspect = vw / h;
+            cam.updateProjectionMatrix();
+            cam.position.set(focus.x + Math.sin(a) * dist, focus.y, focus.z + Math.cos(a) * dist);
+            cam.lookAt(focus);
+            renderer.render(scene, cam);
+          });
+          requestAnimationFrame(draw);
+        }
+        draw();
+      }
+      const fail = (e) => { document.getElementById('info').textContent = 'could not load: ' + e.message; };
+      if (file.endsWith('.obj')) {
+        const base = '/models/' + file.replace(/[^/]+$/, '');
+        new MTLLoader().setPath(base).load(file.replace(/.*\//, '').replace('.obj', '.mtl'), (mtl) => {
+          mtl.preload();
+          new OBJLoader().setMaterials(mtl).setPath(base).load(file.replace(/.*\//, ''), onModel, undefined, fail);
+        }, undefined, () => new OBJLoader().setPath(base).load(file.replace(/.*\//, ''), onModel, undefined, fail));
+      } else {
+        new GLTFLoader().load('/models/' + file, (g) => onModel(g.scene), undefined, fail);
+      }
+    </script>
+  </body>
+</html>

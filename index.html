@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="te">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>పరమేశ్వర ఎంటర్‌ప్రైజెస్ — Paint, Sanitary &amp; Hardware</title>
+    <meta name="description" content="Parameshwara Enterprises — Paint, Sanitary and Hardware shop." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;800&family=Ramabhadra&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="night-sky" aria-hidden="true"></div>
+    <canvas id="scene"></canvas>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="bubble" id="bubble" aria-hidden="true"></div>
+
+    <header class="nav">
+      <a class="brand" href="#top">
+        <img class="emblem" id="brandEmblem" alt="" width="40" height="40" />
+        <span class="brand-text">
+          <b id="brandName">పరమేశ్వర ఎంటర్‌ప్రైజెస్</b>
+          <small>PAINT · SANITARY · HARDWARE</small>
+        </span>
+      </a>
+      <div class="nav-right">
+        <button class="lang day" id="soundBtn" type="button" aria-label="Sound on or off" aria-pressed="true">🔊</button>
+        <button class="lang day" id="dayBtn" type="button" aria-label="Day or night" aria-pressed="false">☀️</button>
+        <button class="lang" id="langBtn" type="button" aria-label="Change language">English</button>
+        <button class="pill" id="listPill" type="button"><span id="pillLabel">మీ చీటీ</span><span class="sep"> · </span><b id="listCount">0</b></button>
+      </div>
+    </header>
+
+    <main id="story"></main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

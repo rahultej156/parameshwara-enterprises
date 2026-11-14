@@ -1,0 +1,14 @@
+# Dependencies and build output (Vercel installs and builds these itself)
+node_modules/
+dist/
+.vercel/
+
+# Logs and OS junk
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Large 3D working files — not used by the live site yet
+public/models/
+reference/
